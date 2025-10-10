@@ -59,6 +59,12 @@ typedef struct {
     unsigned int nr_free;           // number of free pages in this free list
 } free_area_t;
 
+#define MAX_ORDER 11
+typedef struct {
+    list_entry_t free_list[MAX_ORDER]; // 每个阶一个链表
+    unsigned int nr_free[MAX_ORDER];   // 每个阶的空闲块数
+} buddy_free_area_t;
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* !__KERN_MM_MEMLAYOUT_H__ */
