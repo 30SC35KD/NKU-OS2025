@@ -89,7 +89,9 @@ if(p+p->property == base) {
 ![alt text](figs/image1.png)
 
 我们通过了best-fit的所有测试，说明编写成功！
-
+### 改进思路
+best-fit的一大劣势是我们必须顺序地访问所有块，才能找到最合适的块进行分配，我们可以按块大小索引构建树结构，比如平衡二叉树，这样就便于定位大小最合适的块，避免了全部遍历。
+我们也可以提出混合的内存管理机制，比如大块内存请求用first-fit，因为大块数量少，使用first-fit可以降低遍历成本；小块内存请求用best-fit，这样可以减少内存碎片。
 ## Challenge1-buddy system分配算法
 ### 编程实现
 我们在原本代码的基础上新增buddy_pmm模块，按照first-fit的结构进行编写。
@@ -288,6 +290,34 @@ buddy_check(void) {
 
 我们从开始、过程和结束完整地测试了buddy system的页面管理逻辑，验证了我们实现的正确性
 
+## Challenge2-slub内存管理
+我们在此尝试了一个简单的slub内存管理框架，但并没能编写完整的算法进行测试，主要的结构如下：
+1. 我们以之前实现的buddy system为基础的内存管理器，对于不同大小的小对象，采取slub的处理方法。
+2. 我们定义了slab块，包括空闲列表，slab对应的物理页，slab中的空闲对象数量以及缓存中的下一个slab指针：
+```c
+typedef struct slab {
+    struct Page *page;       // 该 slab 对应的页
+    void *free_list;         // 指向第一个空闲对象
+    size_t free_count;       // 空闲对象数
+    struct slab *next;       // 指向下一个 slab
+} slab_t;
+```
+3. kmem_cache是slub算法的核心数据结构，每个实例对应一类固定大小的对象（如 32B、64B 等），负责管理所有存储该大小对象的 slab，这个结构中包含了对象大小、slab链表以及next缓存指针：
+```c
+typedef struct kmem_cache {
+    size_t obj_size;         // 对象大小
+    slab_t *slab_list;       // 指向第一个 slab
+    struct kmem_cache *next; // 指向下一个缓存
+} kmem_cache_t;
+```
+4. 为了实现小对象的分配，我们还定义了几种对象大小（32、64、128、256、512 字节），以及对应的缓存数组，每个元素是一个 kmem_cache_t 实例，分别管理对应大小的对象：
+```c
+#define SIZES_NUM 5
+static kmem_cache_t cache_list[SIZES_NUM];
+static size_t cache_sizes[SIZES_NUM] = {32, 64, 128, 256, 512};
+```
+
+在分配过程中，如果对象太大，直接调用buddy system的alloc方法。如果是小对象，才使用slab等数据结构。由于没有完整实现slub，这里的报告只能展示我们的尝试和思考，很遗憾没能呈现更多的细节和知识理解。
 ## Challenge3-物理内存的可用范围
 如果不知道可用内存范围，可以想到的是从低地址开始，写入一个值然后马上读取，如果读写内容相同则说明是可用内存地址，依次向高地址探测。如果读回失败或数据不匹配，说明该地址是无效地址或不可读写的区域。应该是CPU触发异常，然后内核捕捉异常。
 
