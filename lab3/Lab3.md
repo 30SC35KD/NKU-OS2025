@@ -28,7 +28,7 @@ void clock_set_next_event(void) { sbi_set_timer(get_cycles() + timebase); }
 ```
 使用了sbi中的接口，基本逻辑是timer的数值变为当前时间 + timebase 后，触发一次时钟中断。在代码中，已经定义了timebase=100000,对于QEMU, timer增加1，过去了10^-7 s， 也就是100ns，所以单次中断的时间间隔是0.01s，那么100次大约就是1s。我们的结果也是1s输出一次"100ticks"。至于停止，我设置了一个全局变量**PRINT_COUNT**，每次打印加1，10次打印之后，调用sbi.h中提供的接口**sbi_shutdown()**，关闭机器。
 
-## Challenge2: 描述与理解中断流程
+## Challenge1: 描述与理解中断流程
 代码从**entry.S**进入**kern_init**。与之前实验不同的是，我们在初始化的过程中增加了**idt_init**函数，其定义如下：
 ```c
 void idt_init(void) {
