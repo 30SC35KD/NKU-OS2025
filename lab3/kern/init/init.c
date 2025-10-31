@@ -34,7 +34,9 @@ int kern_init(void) {
 
     clock_init();   // init clock interrupt
     intr_enable();  // enable irq interrupt
-
+    __asm__ __volatile__("ebreak");  // RISC-V 断点指令
+    __asm__ __volatile__ (".word 0xdeadbfff");
+    
     /* do nothing */
     while (1)
         ;

@@ -132,12 +132,12 @@ void interrupt_handler(struct trapframe *tf) {
             */
             clock_set_next_event();
             ticks++;
-            if(PRINT_COUNT==10) 
-                sbi_shutdown();
             if(ticks%TICK_NUM==0)
             {   
                 print_ticks();
                 PRINT_COUNT++;
+                if(PRINT_COUNT==10) 
+                sbi_shutdown();
             }
             
             break;
@@ -166,6 +166,7 @@ void interrupt_handler(struct trapframe *tf) {
 }
 
 void exception_handler(struct trapframe *tf) {
+    uint16_t instr = *(uint16_t *)tf->epc;
     switch (tf->cause) {
         case CAUSE_MISALIGNED_FETCH:
             break;
@@ -180,7 +181,10 @@ void exception_handler(struct trapframe *tf) {
             */
             cprintf("Exception type:Illegal instruction\n");
             cprintf("Illegal instruction caught at 0x%08x\n", tf->epc);
-            tf->epc += 4;
+            
+            if ((instr & 0x03) != 0x03) 
+                tf->epc+=2;  // 压缩指令，2字节
+            else tf->epc+=4; 
             break;
         case CAUSE_BREAKPOINT:
             //断点异常处理
@@ -191,7 +195,9 @@ void exception_handler(struct trapframe *tf) {
             */
             cprintf("Exception type: breakpoint\n");
             cprintf("ebreak caught at 0x%08x\n", tf->epc);
-            tf->epc += 4;
+            if ((instr & 0x03) != 0x03) 
+                tf->epc+=2;  // 压缩指令，2字节
+            else tf->epc+=4;  
             break;
         case CAUSE_MISALIGNED_LOAD:
             break;
