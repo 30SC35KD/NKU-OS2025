@@ -88,7 +88,7 @@ alloc_proc(void)
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL)
     {
-        // LAB4:EXERCISE1 YOUR CODE
+        // LAB4:EXERCISE1 YOUR CODE （小组成员：2312289刘轩麟 2312114李子恒 2213468陈馨颍）
         /*
          * below fields in proc_struct need to be initialized
          *       enum proc_state state;                      // Process state
@@ -104,7 +104,18 @@ alloc_proc(void)
          *       uint32_t flags;                             // Process flag
          *       char name[PROC_NAME_LEN + 1];               // Process name
          */
-        
+        proc->state = 0;//初始值PROC_UNINIT
+        proc->pid = -1; //先设置为无效
+        proc->runs = 0;
+        proc->kstack = 0;
+        proc->need_resched = 0; //不用schedule调度其他进程
+        proc->parent = NULL;
+        proc->mm = NULL;
+        memset(&proc->context, 0, sizeof(struct context));
+        proc->tf = NULL;
+        proc->pgdir = boot_pgdir_pa;
+        proc->flags = 0;
+        memset(proc->name, 0, sizeof(proc->name));
     }
     return proc;
 }
@@ -175,7 +186,7 @@ void proc_run(struct proc_struct *proc)
 {
     if (proc != current)
     {
-        // LAB4:EXERCISE3 YOUR CODE
+        // LAB4:EXERCISE3 YOUR CODE （小组成员：2312289刘轩麟 2312114李子恒 2213468陈馨颍）
         /*
          * Some Useful MACROs, Functions and DEFINEs, you can use them in below implementation.
          * MACROs or Functions:
@@ -184,7 +195,13 @@ void proc_run(struct proc_struct *proc)
          *   lsatp():                   Modify the value of satp register
          *   switch_to():              Context switching between two processes
          */
-
+         bool intr_flag;
+        local_intr_save(intr_flag);
+        struct proc_struct *prev = current;
+        current = proc;
+        lsatp(proc->pgdir);
+        switch_to(&prev->context,&current->context);
+        local_intr_restore(intr_flag);
     }
 }
 
@@ -297,7 +314,7 @@ int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf)
         goto fork_out;
     }
     ret = -E_NO_MEM;
-    // LAB4:EXERCISE2 YOUR CODE
+    // LAB4:EXERCISE2 YOUR CODE （小组成员：2312289刘轩麟 2312114李子恒 2213468陈馨颍）
     /*
      * Some Useful MACROs, Functions and DEFINEs, you can use them in below implementation.
      * MACROs or Functions:
@@ -322,7 +339,23 @@ int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf)
     //    5. insert proc_struct into hash_list && proc_list
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
-    
+    proc = alloc_proc();
+    if (setup_kstack(proc) != 0)
+    {
+        goto bad_fork_cleanup_proc;
+    }
+    if (copy_mm(clone_flags, proc) != 0)
+    {
+        goto bad_fork_cleanup_kstack;
+    }
+    copy_thread(proc,stack,tf);
+    proc->parent = current;          // 父进程为当前进程
+    proc->pid = get_pid();           // 分配唯一 PID
+    hash_proc(proc);                 // 加入 PID 哈希表（加速查找）
+    list_add(&proc_list, &proc->list_link);  // 加入全局进程链表
+    nr_process++;
+    wakeup_proc(proc);
+    ret = proc->pid;
 fork_out:
     return ret;
 

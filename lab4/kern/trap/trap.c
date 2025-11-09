@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <trap.h>
 #include <vmm.h>
-
+#include<sbi.h>
 #define TICK_NUM 100
 
 static void print_ticks()
@@ -20,7 +20,7 @@ static void print_ticks()
     panic("EOT: kernel seems ok.");
 #endif
 }
-
+int PRINT_COUNT = 0;
 /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S
  */
 void idt_init(void)
@@ -111,6 +111,16 @@ void interrupt_handler(struct trapframe *tf)
         // clear_csr(sip, SIP_STIP);
 
         /*LAB3 请补充你在lab3中的代码 */ 
+        clock_set_next_event();
+        ticks++;
+        if(ticks%TICK_NUM==0)
+        {   
+            print_ticks();
+            PRINT_COUNT++;
+            if(PRINT_COUNT==10) 
+            sbi_shutdown();
+        }
+        
         break;
     case IRQ_H_TIMER:
         cprintf("Hypervisor software interrupt\n");
