@@ -99,7 +99,7 @@ alloc_proc(void)
          *       struct proc_struct *parent;                 // the parent process
          *       struct mm_struct *mm;                       // Process's memory management field
          *       struct context context;                     // Switch here to run process
-         *       struct trapframe *tf;                       // Trap frame for current interrupt
+         *       struct  *tf;                       // Trap frame for current interrupt
          *       uintptr_t pgdir;                            // the base addr of Page Directroy Table(PDT)
          *       uint32_t flags;                             // Process flag
          *       char name[PROC_NAME_LEN + 1];               // Process name
@@ -114,6 +114,7 @@ alloc_proc(void)
         memset(&proc->context, 0, sizeof(struct context));
         proc->tf = NULL;
         proc->pgdir = boot_pgdir_pa;
+        //cprintf("boot_pgdir_pa: %lx\n", boot_pgdir_pa);
         proc->flags = 0;
         memset(proc->name, 0, sizeof(proc->name));
     }
@@ -340,6 +341,10 @@ int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf)
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
     proc = alloc_proc();
+    if(proc == NULL)
+    {
+        goto fork_out;
+    }
     if (setup_kstack(proc) != 0)
     {
         goto bad_fork_cleanup_proc;
