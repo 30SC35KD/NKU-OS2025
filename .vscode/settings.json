@@ -1,5 +1,9 @@
 {
     "files.autoSave": "afterDelay",
     "typescript.validate.enable": true,
-    "javascript.validate.enable": true
+    "javascript.validate.enable": true,
+    "editor.quickSuggestions": {
+        "comments": "on",
+        "strings": "on"
+    }
 }

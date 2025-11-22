@@ -212,7 +212,7 @@ void proc_run(struct proc_struct *proc)
 static void
 forkret(void)
 {
-    forkrets(current->tf);
+    forkrets(current->tf); //把中断帧传进去（a0寄存器即tf）
 }
 
 // hash_proc - add proc into proc hash_list
@@ -246,12 +246,12 @@ find_proc(int pid)
 //       proc->tf in do_fork-->copy_thread function
 int kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags)
 {
-    struct trapframe tf;
+    struct trapframe tf;  //手动创建中断帧
     memset(&tf, 0, sizeof(struct trapframe));
-    tf.gpr.s0 = (uintptr_t)fn;
-    tf.gpr.s1 = (uintptr_t)arg;
+    tf.gpr.s0 = (uintptr_t)fn;  //s0存函数指针
+    tf.gpr.s1 = (uintptr_t)arg;  //s1存函数参数
     tf.status = (read_csr(sstatus) | SSTATUS_SPP | SSTATUS_SPIE) & ~SSTATUS_SIE;
-    tf.epc = (uintptr_t)kernel_thread_entry;
+    tf.epc = (uintptr_t)kernel_thread_entry;  //epc指向kernel_thread_entry
     return do_fork(clone_flags | CLONE_VM, 0, &tf);
 }
 
@@ -297,7 +297,7 @@ copy_thread(struct proc_struct *proc, uintptr_t esp, struct trapframe *tf)
     proc->tf->gpr.a0 = 0;
     proc->tf->gpr.sp = (esp == 0) ? (uintptr_t)proc->tf : esp;
 
-    proc->context.ra = (uintptr_t)forkret;
+    proc->context.ra = (uintptr_t)forkret; //switch_to 最后ret的地址就是ra寄存器，来源就是这个
     proc->context.sp = (uintptr_t)(proc->tf);
 }
 

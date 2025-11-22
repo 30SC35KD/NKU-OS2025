@@ -88,35 +88,35 @@ extern uint_t va_pa_offset;
 static inline ppn_t
 page2ppn(struct Page *page)
 {
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 }
 
 static inline uintptr_t
 page2pa(struct Page *page)
 {
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 }
 
 static inline struct Page *
 pa2page(uintptr_t pa)
 {
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
     {
         panic("pa2page called with invalid pa");
     }
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 }
 
 static inline void *
 page2kva(struct Page *page)
 {
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 }
 
 static inline struct Page *
 kva2page(void *kva)
 {
-    return pa2page(PADDR(kva));
+    return pa2page(PADDR(kva));//PADDR是内核虚拟地址->物理地址
 }
 
 static inline struct Page *

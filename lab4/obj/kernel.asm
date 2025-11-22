@@ -2071,7 +2071,7 @@ extern uint_t va_pa_offset;
 static inline ppn_t
 page2ppn(struct Page *page)
 {
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0200e82:	0000c797          	auipc	a5,0xc
 ffffffffc0200e86:	6367b783          	ld	a5,1590(a5) # ffffffffc020d4b8 <pages>
 ffffffffc0200e8a:	40fa8733          	sub	a4,s5,a5
@@ -2088,22 +2088,22 @@ ffffffffc0200ea2:	06b2                	slli	a3,a3,0xc
 static inline uintptr_t
 page2pa(struct Page *page)
 {
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0200ea4:	0732                	slli	a4,a4,0xc
 ffffffffc0200ea6:	28d77763          	bgeu	a4,a3,ffffffffc0201134 <default_check+0x342>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0200eaa:	40f98733          	sub	a4,s3,a5
 ffffffffc0200eae:	8719                	srai	a4,a4,0x6
 ffffffffc0200eb0:	9732                	add	a4,a4,a2
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0200eb2:	0732                	slli	a4,a4,0xc
     assert(page2pa(p1) < npage * PGSIZE);
 ffffffffc0200eb4:	4cd77063          	bgeu	a4,a3,ffffffffc0201374 <default_check+0x582>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0200eb8:	40f507b3          	sub	a5,a0,a5
 ffffffffc0200ebc:	8799                	srai	a5,a5,0x6
 ffffffffc0200ebe:	97b2                	add	a5,a5,a2
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0200ec0:	07b2                	slli	a5,a5,0xc
     assert(page2pa(p2) < npage * PGSIZE);
 ffffffffc0200ec2:	30d7f963          	bgeu	a5,a3,ffffffffc02011d4 <default_check+0x3e2>
@@ -3273,7 +3273,7 @@ ffffffffc0201940:	e406                	sd	ra,8(sp)
 ffffffffc0201942:	34e000ef          	jal	ra,ffffffffc0201c90 <alloc_pages>
 	if (!page)
 ffffffffc0201946:	c91d                	beqz	a0,ffffffffc020197c <__slob_get_free_pages.constprop.0+0x44>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0201948:	0000c697          	auipc	a3,0xc
 ffffffffc020194c:	b706b683          	ld	a3,-1168(a3) # ffffffffc020d4b8 <pages>
 ffffffffc0201950:	8d15                	sub	a0,a0,a3
@@ -3281,14 +3281,14 @@ ffffffffc0201952:	8519                	srai	a0,a0,0x6
 ffffffffc0201954:	00004697          	auipc	a3,0x4
 ffffffffc0201958:	07c6b683          	ld	a3,124(a3) # ffffffffc02059d0 <nbase>
 ffffffffc020195c:	9536                	add	a0,a0,a3
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020195e:	00c51793          	slli	a5,a0,0xc
 ffffffffc0201962:	83b1                	srli	a5,a5,0xc
 ffffffffc0201964:	0000c717          	auipc	a4,0xc
 ffffffffc0201968:	b4c73703          	ld	a4,-1204(a4) # ffffffffc020d4b0 <npage>
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc020196c:	0532                	slli	a0,a0,0xc
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020196e:	00e7fa63          	bgeu	a5,a4,ffffffffc0201982 <__slob_get_free_pages.constprop.0+0x4a>
 ffffffffc0201972:	0000c697          	auipc	a3,0xc
 ffffffffc0201976:	b566b683          	ld	a3,-1194(a3) # ffffffffc020d4c8 <va_pa_offset>
@@ -3626,7 +3626,7 @@ ffffffffc0201b9e:	fe871ae3          	bne	a4,s0,ffffffffc0201b92 <kfree+0x30>
 ffffffffc0201ba2:	e29c                	sd	a5,0(a3)
     if (flag) {
 ffffffffc0201ba4:	ee2d                	bnez	a2,ffffffffc0201c1e <kfree+0xbc>
-    return pa2page(PADDR(kva));
+    return pa2page(PADDR(kva));//PADDR是内核虚拟地址->物理地址
 ffffffffc0201ba6:	c02007b7          	lui	a5,0xc0200
 				spin_unlock_irqrestore(&block_lock, flags);
 				__slob_free_pages((unsigned long)block, bb->order);
@@ -3635,12 +3635,12 @@ ffffffffc0201bac:	08f46963          	bltu	s0,a5,ffffffffc0201c3e <kfree+0xdc>
 ffffffffc0201bb0:	0000c697          	auipc	a3,0xc
 ffffffffc0201bb4:	9186b683          	ld	a3,-1768(a3) # ffffffffc020d4c8 <va_pa_offset>
 ffffffffc0201bb8:	8c15                	sub	s0,s0,a3
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0201bba:	8031                	srli	s0,s0,0xc
 ffffffffc0201bbc:	0000c797          	auipc	a5,0xc
 ffffffffc0201bc0:	8f47b783          	ld	a5,-1804(a5) # ffffffffc020d4b0 <npage>
 ffffffffc0201bc4:	06f47163          	bgeu	s0,a5,ffffffffc0201c26 <kfree+0xc4>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0201bc8:	00004517          	auipc	a0,0x4
 ffffffffc0201bcc:	e0853503          	ld	a0,-504(a0) # ffffffffc02059d0 <nbase>
 ffffffffc0201bd0:	8c09                	sub	s0,s0,a0
@@ -3703,7 +3703,7 @@ ffffffffc0201c2e:	06900593          	li	a1,105
 ffffffffc0201c32:	00003517          	auipc	a0,0x3
 ffffffffc0201c36:	0e650513          	addi	a0,a0,230 # ffffffffc0204d18 <default_pmm_manager+0x60>
 ffffffffc0201c3a:	821fe0ef          	jal	ra,ffffffffc020045a <__panic>
-    return pa2page(PADDR(kva));
+    return pa2page(PADDR(kva));//PADDR是内核虚拟地址->物理地址
 ffffffffc0201c3e:	86a2                	mv	a3,s0
 ffffffffc0201c40:	00003617          	auipc	a2,0x3
 ffffffffc0201c44:	15860613          	addi	a2,a2,344 # ffffffffc0204d98 <default_pmm_manager+0xe0>
@@ -3865,18 +3865,18 @@ ffffffffc0201d48 <get_pte>:
 //  la:     the linear address need to map
 //  create: a logical value to decide if alloc a page for PT
 // return vaule: the kernel virtual address of this pte
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) //在这个地方pgdir是虚拟地址
 {
-    pde_t *pdep1 = &pgdir[PDX1(la)];
+    pde_t *pdep1 = &pgdir[PDX1(la)]; //pgdir是基地址（一级页表）
 ffffffffc0201d48:	01e5d793          	srli	a5,a1,0x1e
 ffffffffc0201d4c:	1ff7f793          	andi	a5,a5,511
 {
 ffffffffc0201d50:	7139                	addi	sp,sp,-64
-    pde_t *pdep1 = &pgdir[PDX1(la)];
+    pde_t *pdep1 = &pgdir[PDX1(la)]; //pgdir是基地址（一级页表）
 ffffffffc0201d52:	078e                	slli	a5,a5,0x3
 {
 ffffffffc0201d54:	f426                	sd	s1,40(sp)
-    pde_t *pdep1 = &pgdir[PDX1(la)];
+    pde_t *pdep1 = &pgdir[PDX1(la)]; //pgdir是基地址（一级页表）
 ffffffffc0201d56:	00f504b3          	add	s1,a0,a5
     if (!(*pdep1 & PTE_V))
 ffffffffc0201d5a:	6094                	ld	a3,0(s1)
@@ -3914,7 +3914,7 @@ ffffffffc0201d96:	9782                	jalr	a5
 ffffffffc0201d98:	842a                	mv	s0,a0
         if (!create || (page = alloc_page()) == NULL)
 ffffffffc0201d9a:	12040d63          	beqz	s0,ffffffffc0201ed4 <get_pte+0x18c>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0201d9e:	0000bb17          	auipc	s6,0xb
 ffffffffc0201da2:	71ab0b13          	addi	s6,s6,1818 # ffffffffc020d4b8 <pages>
 ffffffffc0201da6:	000b3503          	ld	a0,0(s6)
@@ -3923,8 +3923,8 @@ ffffffffc0201daa:	00080ab7          	lui	s5,0x80
             return NULL;
         }
         set_page_ref(page, 1);
-        uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
+        uintptr_t pa = page2pa(page); //获取物理地址
+        memset(KADDR(pa), 0, PGSIZE); //清零页面
 ffffffffc0201dae:	0000b997          	auipc	s3,0xb
 ffffffffc0201db2:	70298993          	addi	s3,s3,1794 # ffffffffc020d4b0 <npage>
 ffffffffc0201db6:	40a40533          	sub	a0,s0,a0
@@ -3936,7 +3936,7 @@ ffffffffc0201dc2:	00c51793          	slli	a5,a0,0xc
 ffffffffc0201dc6:	4685                	li	a3,1
 ffffffffc0201dc8:	c014                	sw	a3,0(s0)
 ffffffffc0201dca:	83b1                	srli	a5,a5,0xc
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0201dcc:	0532                	slli	a0,a0,0xc
 ffffffffc0201dce:	16e7f763          	bgeu	a5,a4,ffffffffc0201f3c <get_pte+0x1f4>
 ffffffffc0201dd2:	0000b797          	auipc	a5,0xb
@@ -3945,7 +3945,7 @@ ffffffffc0201dda:	6605                	lui	a2,0x1
 ffffffffc0201ddc:	4581                	li	a1,0
 ffffffffc0201dde:	953e                	add	a0,a0,a5
 ffffffffc0201de0:	056020ef          	jal	ra,ffffffffc0203e36 <memset>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0201de4:	000b3683          	ld	a3,0(s6)
 ffffffffc0201de8:	40d406b3          	sub	a3,s0,a3
 ffffffffc0201dec:	8699                	srai	a3,a3,0x6
@@ -3961,7 +3961,7 @@ ffffffffc0201df2:	0116e693          	ori	a3,a3,17
         *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
 ffffffffc0201df6:	e094                	sd	a3,0(s1)
     }
-    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
+    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)]; //PDE_ADDR作用是提取页表项的物理页号，左移得到物理地址
 ffffffffc0201df8:	77fd                	lui	a5,0xfffff
 ffffffffc0201dfa:	068a                	slli	a3,a3,0x2
 ffffffffc0201dfc:	0009b703          	ld	a4,0(s3)
@@ -3976,6 +3976,7 @@ ffffffffc0201e1a:	1ff7f793          	andi	a5,a5,511
 ffffffffc0201e1e:	96a2                	add	a3,a3,s0
 ffffffffc0201e20:	00379413          	slli	s0,a5,0x3
 ffffffffc0201e24:	9436                	add	s0,s0,a3
+    //然后转为虚拟地址并转换成页表项数组，这样就可以利用第二级偏移
     if (!(*pdep0 & PTE_V))
 ffffffffc0201e26:	6014                	ld	a3,0(s0)
 ffffffffc0201e28:	0016f793          	andi	a5,a3,1
@@ -3996,7 +3997,7 @@ ffffffffc0201e46:	9782                	jalr	a5
 ffffffffc0201e48:	84aa                	mv	s1,a0
         if (!create || (page = alloc_page()) == NULL)
 ffffffffc0201e4a:	c4c9                	beqz	s1,ffffffffc0201ed4 <get_pte+0x18c>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0201e4c:	0000bb17          	auipc	s6,0xb
 ffffffffc0201e50:	66cb0b13          	addi	s6,s6,1644 # ffffffffc020d4b8 <pages>
 ffffffffc0201e54:	000b3503          	ld	a0,0(s6)
@@ -4016,7 +4017,7 @@ ffffffffc0201e68:	00c51793          	slli	a5,a0,0xc
 ffffffffc0201e6c:	4685                	li	a3,1
 ffffffffc0201e6e:	c094                	sw	a3,0(s1)
 ffffffffc0201e70:	83b1                	srli	a5,a5,0xc
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0201e72:	0532                	slli	a0,a0,0xc
 ffffffffc0201e74:	0ee7f163          	bgeu	a5,a4,ffffffffc0201f56 <get_pte+0x20e>
 ffffffffc0201e78:	000ab783          	ld	a5,0(s5)
@@ -4024,7 +4025,7 @@ ffffffffc0201e7c:	6605                	lui	a2,0x1
 ffffffffc0201e7e:	4581                	li	a1,0
 ffffffffc0201e80:	953e                	add	a0,a0,a5
 ffffffffc0201e82:	7b5010ef          	jal	ra,ffffffffc0203e36 <memset>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0201e86:	000b3683          	ld	a3,0(s6)
 ffffffffc0201e8a:	40d486b3          	sub	a3,s1,a3
 ffffffffc0201e8e:	8699                	srai	a3,a3,0x6
@@ -4035,7 +4036,7 @@ ffffffffc0201e94:	0116e693          	ori	a3,a3,17
         *pdep0 = pte_create(page2ppn(page), PTE_U | PTE_V);
 ffffffffc0201e98:	e014                	sd	a3,0(s0)
     }
-    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];//第三级偏移，得到了指向页的页表项指针
 ffffffffc0201e9a:	0009b703          	ld	a4,0(s3)
 ffffffffc0201e9e:	068a                	slli	a3,a3,0x2
 ffffffffc0201ea0:	757d                	lui	a0,0xfffff
@@ -4085,21 +4086,21 @@ ffffffffc0201f04:	84aa                	mv	s1,a0
         intr_enable();
 ffffffffc0201f06:	a25fe0ef          	jal	ra,ffffffffc020092a <intr_enable>
 ffffffffc0201f0a:	b781                	j	ffffffffc0201e4a <get_pte+0x102>
-    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];//第三级偏移，得到了指向页的页表项指针
 ffffffffc0201f0c:	00003617          	auipc	a2,0x3
 ffffffffc0201f10:	de460613          	addi	a2,a2,-540 # ffffffffc0204cf0 <default_pmm_manager+0x38>
-ffffffffc0201f14:	0fb00593          	li	a1,251
+ffffffffc0201f14:	0fc00593          	li	a1,252
 ffffffffc0201f18:	00003517          	auipc	a0,0x3
 ffffffffc0201f1c:	ef050513          	addi	a0,a0,-272 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0201f20:	d3afe0ef          	jal	ra,ffffffffc020045a <__panic>
-    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
+    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)]; //PDE_ADDR作用是提取页表项的物理页号，左移得到物理地址
 ffffffffc0201f24:	00003617          	auipc	a2,0x3
 ffffffffc0201f28:	dcc60613          	addi	a2,a2,-564 # ffffffffc0204cf0 <default_pmm_manager+0x38>
 ffffffffc0201f2c:	0ee00593          	li	a1,238
 ffffffffc0201f30:	00003517          	auipc	a0,0x3
 ffffffffc0201f34:	ed850513          	addi	a0,a0,-296 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0201f38:	d22fe0ef          	jal	ra,ffffffffc020045a <__panic>
-        memset(KADDR(pa), 0, PGSIZE);
+        memset(KADDR(pa), 0, PGSIZE); //清零页面
 ffffffffc0201f3c:	86aa                	mv	a3,a0
 ffffffffc0201f3e:	00003617          	auipc	a2,0x3
 ffffffffc0201f42:	db260613          	addi	a2,a2,-590 # ffffffffc0204cf0 <default_pmm_manager+0x38>
@@ -4111,7 +4112,7 @@ ffffffffc0201f52:	d08fe0ef          	jal	ra,ffffffffc020045a <__panic>
 ffffffffc0201f56:	86aa                	mv	a3,a0
 ffffffffc0201f58:	00003617          	auipc	a2,0x3
 ffffffffc0201f5c:	d9860613          	addi	a2,a2,-616 # ffffffffc0204cf0 <default_pmm_manager+0x38>
-ffffffffc0201f60:	0f800593          	li	a1,248
+ffffffffc0201f60:	0f900593          	li	a1,249
 ffffffffc0201f64:	00003517          	auipc	a0,0x3
 ffffffffc0201f68:	ea450513          	addi	a0,a0,-348 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0201f6c:	ceefe0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -4155,13 +4156,13 @@ ffffffffc0201f94:	8082                	ret
     return pa2page(PTE_ADDR(pte));
 ffffffffc0201f96:	078a                	slli	a5,a5,0x2
 ffffffffc0201f98:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0201f9a:	0000b717          	auipc	a4,0xb
 ffffffffc0201f9e:	51673703          	ld	a4,1302(a4) # ffffffffc020d4b0 <npage>
 ffffffffc0201fa2:	00e7ff63          	bgeu	a5,a4,ffffffffc0201fc0 <get_page+0x50>
 ffffffffc0201fa6:	60a2                	ld	ra,8(sp)
 ffffffffc0201fa8:	6402                	ld	s0,0(sp)
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0201faa:	fff80537          	lui	a0,0xfff80
 ffffffffc0201fae:	97aa                	add	a5,a5,a0
 ffffffffc0201fb0:	079a                	slli	a5,a5,0x6
@@ -4208,11 +4209,11 @@ ffffffffc0201fe8:	8082                	ret
     return pa2page(PTE_ADDR(pte));
 ffffffffc0201fea:	078a                	slli	a5,a5,0x2
 ffffffffc0201fec:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0201fee:	0000b717          	auipc	a4,0xb
 ffffffffc0201ff2:	4c273703          	ld	a4,1218(a4) # ffffffffc020d4b0 <npage>
 ffffffffc0201ff6:	06e7f363          	bgeu	a5,a4,ffffffffc020205c <page_remove+0x98>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0201ffa:	fff80537          	lui	a0,0xfff80
 ffffffffc0201ffe:	97aa                	add	a5,a5,a0
 ffffffffc0202000:	079a                	slli	a5,a5,0x6
@@ -4272,11 +4273,11 @@ ffffffffc0202060:	7139                	addi	sp,sp,-64
 ffffffffc0202062:	e852                	sd	s4,16(sp)
 ffffffffc0202064:	8a32                	mv	s4,a2
 ffffffffc0202066:	f822                	sd	s0,48(sp)
-    pte_t *ptep = get_pte(pgdir, la, 1);
+    pte_t *ptep = get_pte(pgdir, la, 1); //页表项64位，高44位是物理页号PPN，低20位是标志位
 ffffffffc0202068:	4605                	li	a2,1
 {
 ffffffffc020206a:	842e                	mv	s0,a1
-    pte_t *ptep = get_pte(pgdir, la, 1);
+    pte_t *ptep = get_pte(pgdir, la, 1); //页表项64位，高44位是物理页号PPN，低20位是标志位
 ffffffffc020206c:	85d2                	mv	a1,s4
 {
 ffffffffc020206e:	f426                	sd	s1,40(sp)
@@ -4285,7 +4286,7 @@ ffffffffc0202072:	f04a                	sd	s2,32(sp)
 ffffffffc0202074:	ec4e                	sd	s3,24(sp)
 ffffffffc0202076:	e456                	sd	s5,8(sp)
 ffffffffc0202078:	84b6                	mv	s1,a3
-    pte_t *ptep = get_pte(pgdir, la, 1);
+    pte_t *ptep = get_pte(pgdir, la, 1); //页表项64位，高44位是物理页号PPN，低20位是标志位
 ffffffffc020207a:	ccfff0ef          	jal	ra,ffffffffc0201d48 <get_pte>
     if (ptep == NULL)
 ffffffffc020207e:	c961                	beqz	a0,ffffffffc020214e <page_insert+0xee>
@@ -4298,7 +4299,7 @@ ffffffffc0202086:	0016871b          	addiw	a4,a3,1
 ffffffffc020208a:	c018                	sw	a4,0(s0)
 ffffffffc020208c:	0017f713          	andi	a4,a5,1
 ffffffffc0202090:	ef05                	bnez	a4,ffffffffc02020c8 <page_insert+0x68>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0202092:	0000b717          	auipc	a4,0xb
 ffffffffc0202096:	42673703          	ld	a4,1062(a4) # ffffffffc020d4b8 <pages>
 ffffffffc020209a:	8c19                	sub	s0,s0,a4
@@ -4309,7 +4310,7 @@ ffffffffc02020a2:	943e                	add	s0,s0,a5
 ffffffffc02020a4:	042a                	slli	s0,s0,0xa
 ffffffffc02020a6:	8cc1                	or	s1,s1,s0
 ffffffffc02020a8:	0014e493          	ori	s1,s1,1
-    *ptep = pte_create(page2ppn(page), PTE_V | perm);
+    *ptep = pte_create(page2ppn(page), PTE_V | perm); //这个页表项的地址没变，内容更新了，也就建立了新的映射
 ffffffffc02020ac:	0099b023          	sd	s1,0(s3)
     asm volatile("sfence.vma %0" : : "r"(la));
 ffffffffc02020b0:	120a0073          	sfence.vma	s4
@@ -4328,11 +4329,11 @@ ffffffffc02020c6:	8082                	ret
     return pa2page(PTE_ADDR(pte));
 ffffffffc02020c8:	078a                	slli	a5,a5,0x2
 ffffffffc02020ca:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02020cc:	0000b717          	auipc	a4,0xb
 ffffffffc02020d0:	3e473703          	ld	a4,996(a4) # ffffffffc020d4b0 <npage>
 ffffffffc02020d4:	06e7ff63          	bgeu	a5,a4,ffffffffc0202152 <page_insert+0xf2>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc02020d8:	0000ba97          	auipc	s5,0xb
 ffffffffc02020dc:	3e0a8a93          	addi	s5,s5,992 # ffffffffc020d4b8 <pages>
 ffffffffc02020e0:	000ab703          	ld	a4,0(s5)
@@ -4340,7 +4341,7 @@ ffffffffc02020e4:	fff80937          	lui	s2,0xfff80
 ffffffffc02020e8:	993e                	add	s2,s2,a5
 ffffffffc02020ea:	091a                	slli	s2,s2,0x6
 ffffffffc02020ec:	993a                	add	s2,s2,a4
-        if (p == page)
+        if (p == page) //正好映射的是同一页面
 ffffffffc02020ee:	01240c63          	beq	s0,s2,ffffffffc0202106 <page_insert+0xa6>
     page->ref -= 1;
 ffffffffc02020f2:	00092783          	lw	a5,0(s2) # fffffffffff80000 <end+0x3fd72b14>
@@ -4366,7 +4367,7 @@ ffffffffc020211a:	739c                	ld	a5,32(a5)
 ffffffffc020211c:	4585                	li	a1,1
 ffffffffc020211e:	854a                	mv	a0,s2
 ffffffffc0202120:	9782                	jalr	a5
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0202122:	000ab703          	ld	a4,0(s5)
     asm volatile("sfence.vma %0" : : "r"(la));
 ffffffffc0202126:	120a0073          	sfence.vma	s4
@@ -4600,14 +4601,14 @@ ffffffffc0202316:	611c                	ld	a5,0(a0)
     if (!(pte & PTE_V))
 ffffffffc0202318:	0017f713          	andi	a4,a5,1
 ffffffffc020231c:	5a070263          	beqz	a4,ffffffffc02028c0 <pmm_init+0x76a>
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202320:	6098                	ld	a4,0(s1)
     return pa2page(PTE_ADDR(pte));
 ffffffffc0202322:	078a                	slli	a5,a5,0x2
 ffffffffc0202324:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202326:	58e7fb63          	bgeu	a5,a4,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc020232a:	000bb683          	ld	a3,0(s7)
 ffffffffc020232e:	fff80637          	lui	a2,0xfff80
 ffffffffc0202332:	97b2                	add	a5,a5,a2
@@ -4711,14 +4712,14 @@ ffffffffc0202410:	6118                	ld	a4,0(a0)
     if (!(pte & PTE_V))
 ffffffffc0202412:	00177793          	andi	a5,a4,1
 ffffffffc0202416:	4a078563          	beqz	a5,ffffffffc02028c0 <pmm_init+0x76a>
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc020241a:	6094                	ld	a3,0(s1)
     return pa2page(PTE_ADDR(pte));
 ffffffffc020241c:	00271793          	slli	a5,a4,0x2
 ffffffffc0202420:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202422:	48d7fd63          	bgeu	a5,a3,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0202426:	000bb683          	ld	a3,0(s7)
 ffffffffc020242a:	fff80ab7          	lui	s5,0xfff80
 ffffffffc020242e:	97d6                	add	a5,a5,s5
@@ -4754,15 +4755,15 @@ ffffffffc0202470:	50079663          	bnez	a5,ffffffffc020297c <pmm_init+0x826>
 
     assert(page_ref(pde2page(boot_pgdir_va[0])) == 1);
 ffffffffc0202474:	00093a03          	ld	s4,0(s2)
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202478:	608c                	ld	a1,0(s1)
     return pa2page(PDE_ADDR(pde));
 ffffffffc020247a:	000a3683          	ld	a3,0(s4)
 ffffffffc020247e:	068a                	slli	a3,a3,0x2
 ffffffffc0202480:	82b1                	srli	a3,a3,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202482:	42b6fd63          	bgeu	a3,a1,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0202486:	000bb503          	ld	a0,0(s7)
 ffffffffc020248a:	96d6                	add	a3,a3,s5
 ffffffffc020248c:	069a                	slli	a3,a3,0x6
@@ -4770,16 +4771,16 @@ ffffffffc020248c:	069a                	slli	a3,a3,0x6
 ffffffffc020248e:	00d507b3          	add	a5,a0,a3
 ffffffffc0202492:	439c                	lw	a5,0(a5)
 ffffffffc0202494:	4d979463          	bne	a5,s9,ffffffffc020295c <pmm_init+0x806>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0202498:	8699                	srai	a3,a3,0x6
 ffffffffc020249a:	00080637          	lui	a2,0x80
 ffffffffc020249e:	96b2                	add	a3,a3,a2
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc02024a0:	00c69713          	slli	a4,a3,0xc
 ffffffffc02024a4:	8331                	srli	a4,a4,0xc
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc02024a6:	06b2                	slli	a3,a3,0xc
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc02024a8:	48b77e63          	bgeu	a4,a1,ffffffffc0202944 <pmm_init+0x7ee>
 
     pde_t *pd1 = boot_pgdir_va, *pd0 = page2kva(pde2page(boot_pgdir_va[0]));
@@ -4790,9 +4791,9 @@ ffffffffc02024b0:	96ba                	add	a3,a3,a4
 ffffffffc02024b2:	629c                	ld	a5,0(a3)
 ffffffffc02024b4:	078a                	slli	a5,a5,0x2
 ffffffffc02024b6:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02024b8:	40b7f263          	bgeu	a5,a1,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc02024bc:	8f91                	sub	a5,a5,a2
 ffffffffc02024be:	079a                	slli	a5,a5,0x6
 ffffffffc02024c0:	953e                	add	a0,a0,a5
@@ -4806,14 +4807,14 @@ ffffffffc02024d2:	739c                	ld	a5,32(a5)
 ffffffffc02024d4:	9782                	jalr	a5
     return pa2page(PDE_ADDR(pde));
 ffffffffc02024d6:	000a3783          	ld	a5,0(s4)
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02024da:	6098                	ld	a4,0(s1)
     return pa2page(PDE_ADDR(pde));
 ffffffffc02024dc:	078a                	slli	a5,a5,0x2
 ffffffffc02024de:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02024e0:	3ce7fe63          	bgeu	a5,a4,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc02024e4:	000bb503          	ld	a0,0(s7)
 ffffffffc02024e8:	fff80737          	lui	a4,0xfff80
 ffffffffc02024ec:	97ba                	add	a5,a5,a4
@@ -4945,24 +4946,24 @@ ffffffffc02025fe:	10040593          	addi	a1,s0,256
 ffffffffc0202602:	10000513          	li	a0,256
 ffffffffc0202606:	7d6010ef          	jal	ra,ffffffffc0203ddc <strcmp>
 ffffffffc020260a:	6a051e63          	bnez	a0,ffffffffc0202cc6 <pmm_init+0xb70>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc020260e:	000bb683          	ld	a3,0(s7)
 ffffffffc0202612:	00080737          	lui	a4,0x80
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc0202616:	547d                	li	s0,-1
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0202618:	40da06b3          	sub	a3,s4,a3
 ffffffffc020261c:	8699                	srai	a3,a3,0x6
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020261e:	609c                	ld	a5,0(s1)
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0202620:	96ba                	add	a3,a3,a4
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc0202622:	8031                	srli	s0,s0,0xc
 ffffffffc0202624:	0086f733          	and	a4,a3,s0
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0202628:	06b2                	slli	a3,a3,0xc
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020262a:	30f77d63          	bgeu	a4,a5,ffffffffc0202944 <pmm_init+0x7ee>
 
     *(char *)(page2kva(p) + 0x100) = '\0';
@@ -4978,19 +4979,19 @@ ffffffffc0202640:	66051363          	bnez	a0,ffffffffc0202ca6 <pmm_init+0xb50>
 
     pde_t *pd1 = boot_pgdir_va, *pd0 = page2kva(pde2page(boot_pgdir_va[0]));
 ffffffffc0202644:	00093a83          	ld	s5,0(s2)
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202648:	609c                	ld	a5,0(s1)
     return pa2page(PDE_ADDR(pde));
 ffffffffc020264a:	000ab683          	ld	a3,0(s5) # fffffffffffff000 <end+0x3fdf1b14>
 ffffffffc020264e:	068a                	slli	a3,a3,0x2
 ffffffffc0202650:	82b1                	srli	a3,a3,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202652:	26f6f563          	bgeu	a3,a5,ffffffffc02028bc <pmm_init+0x766>
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc0202656:	8c75                	and	s0,s0,a3
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc0202658:	06b2                	slli	a3,a3,0xc
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020265a:	2ef47563          	bgeu	s0,a5,ffffffffc0202944 <pmm_init+0x7ee>
 ffffffffc020265e:	0009b403          	ld	s0,0(s3)
 ffffffffc0202662:	9436                	add	s0,s0,a3
@@ -5005,14 +5006,14 @@ ffffffffc0202676:	739c                	ld	a5,32(a5)
 ffffffffc0202678:	9782                	jalr	a5
     return pa2page(PDE_ADDR(pde));
 ffffffffc020267a:	601c                	ld	a5,0(s0)
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc020267c:	6098                	ld	a4,0(s1)
     return pa2page(PDE_ADDR(pde));
 ffffffffc020267e:	078a                	slli	a5,a5,0x2
 ffffffffc0202680:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202682:	22e7fd63          	bgeu	a5,a4,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc0202686:	000bb503          	ld	a0,0(s7)
 ffffffffc020268a:	fff80737          	lui	a4,0xfff80
 ffffffffc020268e:	97ba                	add	a5,a5,a4
@@ -5027,14 +5028,14 @@ ffffffffc02026a4:	739c                	ld	a5,32(a5)
 ffffffffc02026a6:	9782                	jalr	a5
     return pa2page(PDE_ADDR(pde));
 ffffffffc02026a8:	000ab783          	ld	a5,0(s5)
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02026ac:	6098                	ld	a4,0(s1)
     return pa2page(PDE_ADDR(pde));
 ffffffffc02026ae:	078a                	slli	a5,a5,0x2
 ffffffffc02026b0:	83b1                	srli	a5,a5,0xc
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc02026b2:	20e7f563          	bgeu	a5,a4,ffffffffc02028bc <pmm_init+0x766>
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc02026b6:	000bb503          	ld	a0,0(s7)
 ffffffffc02026ba:	fff80737          	lui	a4,0xfff80
 ffffffffc02026be:	97ba                	add	a5,a5,a4
@@ -5126,12 +5127,12 @@ ffffffffc020276a:	6705                	lui	a4,0x1
 ffffffffc020276c:	177d                	addi	a4,a4,-1
 ffffffffc020276e:	96ba                	add	a3,a3,a4
 ffffffffc0202770:	8ff5                	and	a5,a5,a3
-    if (PPN(pa) >= npage)
+    if (PPN(pa) >= npage) //PPN意味着物理地址->页面编号
 ffffffffc0202772:	00c7d713          	srli	a4,a5,0xc
 ffffffffc0202776:	14a77363          	bgeu	a4,a0,ffffffffc02028bc <pmm_init+0x766>
     pmm_manager->init_memmap(base, n);
 ffffffffc020277a:	000b3683          	ld	a3,0(s6)
-    return &pages[PPN(pa) - nbase];
+    return &pages[PPN(pa) - nbase]; //nbase是其实也好，这个是在计算pages数组里的索引
 ffffffffc020277e:	fff80537          	lui	a0,0xfff80
 ffffffffc0202782:	972a                	add	a4,a4,a0
 ffffffffc0202784:	6a94                	ld	a3,16(a3)
@@ -5246,7 +5247,7 @@ ffffffffc0202860:	bd29                	j	ffffffffc020267a <pmm_init+0x524>
 ffffffffc0202862:	86a2                	mv	a3,s0
 ffffffffc0202864:	00002617          	auipc	a2,0x2
 ffffffffc0202868:	48c60613          	addi	a2,a2,1164 # ffffffffc0204cf0 <default_pmm_manager+0x38>
-ffffffffc020286c:	1a400593          	li	a1,420
+ffffffffc020286c:	1a600593          	li	a1,422
 ffffffffc0202870:	00002517          	auipc	a0,0x2
 ffffffffc0202874:	59850513          	addi	a0,a0,1432 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202878:	be3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5255,7 +5256,7 @@ ffffffffc020287c:	00003697          	auipc	a3,0x3
 ffffffffc0202880:	9b468693          	addi	a3,a3,-1612 # ffffffffc0205230 <default_pmm_manager+0x578>
 ffffffffc0202884:	00002617          	auipc	a2,0x2
 ffffffffc0202888:	08460613          	addi	a2,a2,132 # ffffffffc0204908 <commands+0x818>
-ffffffffc020288c:	1a500593          	li	a1,421
+ffffffffc020288c:	1a700593          	li	a1,423
 ffffffffc0202890:	00002517          	auipc	a0,0x2
 ffffffffc0202894:	57850513          	addi	a0,a0,1400 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202898:	bc3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5264,7 +5265,7 @@ ffffffffc020289c:	00003697          	auipc	a3,0x3
 ffffffffc02028a0:	95468693          	addi	a3,a3,-1708 # ffffffffc02051f0 <default_pmm_manager+0x538>
 ffffffffc02028a4:	00002617          	auipc	a2,0x2
 ffffffffc02028a8:	06460613          	addi	a2,a2,100 # ffffffffc0204908 <commands+0x818>
-ffffffffc02028ac:	1a400593          	li	a1,420
+ffffffffc02028ac:	1a600593          	li	a1,422
 ffffffffc02028b0:	00002517          	auipc	a0,0x2
 ffffffffc02028b4:	55850513          	addi	a0,a0,1368 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc02028b8:	ba3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5275,7 +5276,7 @@ ffffffffc02028c4:	00002697          	auipc	a3,0x2
 ffffffffc02028c8:	72468693          	addi	a3,a3,1828 # ffffffffc0204fe8 <default_pmm_manager+0x330>
 ffffffffc02028cc:	00002617          	auipc	a2,0x2
 ffffffffc02028d0:	03c60613          	addi	a2,a2,60 # ffffffffc0204908 <commands+0x818>
-ffffffffc02028d4:	17400593          	li	a1,372
+ffffffffc02028d4:	17600593          	li	a1,374
 ffffffffc02028d8:	00002517          	auipc	a0,0x2
 ffffffffc02028dc:	53050513          	addi	a0,a0,1328 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc02028e0:	b7bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5284,7 +5285,7 @@ ffffffffc02028e4:	00002697          	auipc	a3,0x2
 ffffffffc02028e8:	64468693          	addi	a3,a3,1604 # ffffffffc0204f28 <default_pmm_manager+0x270>
 ffffffffc02028ec:	00002617          	auipc	a2,0x2
 ffffffffc02028f0:	01c60613          	addi	a2,a2,28 # ffffffffc0204908 <commands+0x818>
-ffffffffc02028f4:	16700593          	li	a1,359
+ffffffffc02028f4:	16900593          	li	a1,361
 ffffffffc02028f8:	00002517          	auipc	a0,0x2
 ffffffffc02028fc:	51050513          	addi	a0,a0,1296 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202900:	b5bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5293,7 +5294,7 @@ ffffffffc0202904:	00002697          	auipc	a3,0x2
 ffffffffc0202908:	5e468693          	addi	a3,a3,1508 # ffffffffc0204ee8 <default_pmm_manager+0x230>
 ffffffffc020290c:	00002617          	auipc	a2,0x2
 ffffffffc0202910:	ffc60613          	addi	a2,a2,-4 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202914:	16600593          	li	a1,358
+ffffffffc0202914:	16800593          	li	a1,360
 ffffffffc0202918:	00002517          	auipc	a0,0x2
 ffffffffc020291c:	4f050513          	addi	a0,a0,1264 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202920:	b3bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5302,11 +5303,11 @@ ffffffffc0202924:	00002697          	auipc	a3,0x2
 ffffffffc0202928:	5a468693          	addi	a3,a3,1444 # ffffffffc0204ec8 <default_pmm_manager+0x210>
 ffffffffc020292c:	00002617          	auipc	a2,0x2
 ffffffffc0202930:	fdc60613          	addi	a2,a2,-36 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202934:	16500593          	li	a1,357
+ffffffffc0202934:	16700593          	li	a1,359
 ffffffffc0202938:	00002517          	auipc	a0,0x2
 ffffffffc020293c:	4d050513          	addi	a0,a0,1232 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202940:	b1bfd0ef          	jal	ra,ffffffffc020045a <__panic>
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc0202944:	00002617          	auipc	a2,0x2
 ffffffffc0202948:	3ac60613          	addi	a2,a2,940 # ffffffffc0204cf0 <default_pmm_manager+0x38>
 ffffffffc020294c:	07100593          	li	a1,113
@@ -5318,7 +5319,7 @@ ffffffffc020295c:	00003697          	auipc	a3,0x3
 ffffffffc0202960:	81c68693          	addi	a3,a3,-2020 # ffffffffc0205178 <default_pmm_manager+0x4c0>
 ffffffffc0202964:	00002617          	auipc	a2,0x2
 ffffffffc0202968:	fa460613          	addi	a2,a2,-92 # ffffffffc0204908 <commands+0x818>
-ffffffffc020296c:	18d00593          	li	a1,397
+ffffffffc020296c:	18f00593          	li	a1,399
 ffffffffc0202970:	00002517          	auipc	a0,0x2
 ffffffffc0202974:	49850513          	addi	a0,a0,1176 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202978:	ae3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5327,7 +5328,7 @@ ffffffffc020297c:	00002697          	auipc	a3,0x2
 ffffffffc0202980:	7b468693          	addi	a3,a3,1972 # ffffffffc0205130 <default_pmm_manager+0x478>
 ffffffffc0202984:	00002617          	auipc	a2,0x2
 ffffffffc0202988:	f8460613          	addi	a2,a2,-124 # ffffffffc0204908 <commands+0x818>
-ffffffffc020298c:	18b00593          	li	a1,395
+ffffffffc020298c:	18d00593          	li	a1,397
 ffffffffc0202990:	00002517          	auipc	a0,0x2
 ffffffffc0202994:	47850513          	addi	a0,a0,1144 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202998:	ac3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5336,7 +5337,7 @@ ffffffffc020299c:	00002697          	auipc	a3,0x2
 ffffffffc02029a0:	7c468693          	addi	a3,a3,1988 # ffffffffc0205160 <default_pmm_manager+0x4a8>
 ffffffffc02029a4:	00002617          	auipc	a2,0x2
 ffffffffc02029a8:	f6460613          	addi	a2,a2,-156 # ffffffffc0204908 <commands+0x818>
-ffffffffc02029ac:	18a00593          	li	a1,394
+ffffffffc02029ac:	18c00593          	li	a1,396
 ffffffffc02029b0:	00002517          	auipc	a0,0x2
 ffffffffc02029b4:	45850513          	addi	a0,a0,1112 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc02029b8:	aa3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5345,7 +5346,7 @@ ffffffffc02029bc:	00003697          	auipc	a3,0x3
 ffffffffc02029c0:	88c68693          	addi	a3,a3,-1908 # ffffffffc0205248 <default_pmm_manager+0x590>
 ffffffffc02029c4:	00002617          	auipc	a2,0x2
 ffffffffc02029c8:	f4460613          	addi	a2,a2,-188 # ffffffffc0204908 <commands+0x818>
-ffffffffc02029cc:	1a800593          	li	a1,424
+ffffffffc02029cc:	1aa00593          	li	a1,426
 ffffffffc02029d0:	00002517          	auipc	a0,0x2
 ffffffffc02029d4:	43850513          	addi	a0,a0,1080 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc02029d8:	a83fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5354,7 +5355,7 @@ ffffffffc02029dc:	00002697          	auipc	a3,0x2
 ffffffffc02029e0:	7cc68693          	addi	a3,a3,1996 # ffffffffc02051a8 <default_pmm_manager+0x4f0>
 ffffffffc02029e4:	00002617          	auipc	a2,0x2
 ffffffffc02029e8:	f2460613          	addi	a2,a2,-220 # ffffffffc0204908 <commands+0x818>
-ffffffffc02029ec:	19500593          	li	a1,405
+ffffffffc02029ec:	19700593          	li	a1,407
 ffffffffc02029f0:	00002517          	auipc	a0,0x2
 ffffffffc02029f4:	41850513          	addi	a0,a0,1048 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc02029f8:	a63fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5363,7 +5364,7 @@ ffffffffc02029fc:	00003697          	auipc	a3,0x3
 ffffffffc0202a00:	8a468693          	addi	a3,a3,-1884 # ffffffffc02052a0 <default_pmm_manager+0x5e8>
 ffffffffc0202a04:	00002617          	auipc	a2,0x2
 ffffffffc0202a08:	f0460613          	addi	a2,a2,-252 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202a0c:	1ad00593          	li	a1,429
+ffffffffc0202a0c:	1af00593          	li	a1,431
 ffffffffc0202a10:	00002517          	auipc	a0,0x2
 ffffffffc0202a14:	3f850513          	addi	a0,a0,1016 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202a18:	a43fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5372,7 +5373,7 @@ ffffffffc0202a1c:	00003697          	auipc	a3,0x3
 ffffffffc0202a20:	84468693          	addi	a3,a3,-1980 # ffffffffc0205260 <default_pmm_manager+0x5a8>
 ffffffffc0202a24:	00002617          	auipc	a2,0x2
 ffffffffc0202a28:	ee460613          	addi	a2,a2,-284 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202a2c:	1ac00593          	li	a1,428
+ffffffffc0202a2c:	1ae00593          	li	a1,430
 ffffffffc0202a30:	00002517          	auipc	a0,0x2
 ffffffffc0202a34:	3d850513          	addi	a0,a0,984 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202a38:	a23fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5381,7 +5382,7 @@ ffffffffc0202a3c:	00002697          	auipc	a3,0x2
 ffffffffc0202a40:	6f468693          	addi	a3,a3,1780 # ffffffffc0205130 <default_pmm_manager+0x478>
 ffffffffc0202a44:	00002617          	auipc	a2,0x2
 ffffffffc0202a48:	ec460613          	addi	a2,a2,-316 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202a4c:	18700593          	li	a1,391
+ffffffffc0202a4c:	18900593          	li	a1,393
 ffffffffc0202a50:	00002517          	auipc	a0,0x2
 ffffffffc0202a54:	3b850513          	addi	a0,a0,952 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202a58:	a03fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5390,7 +5391,7 @@ ffffffffc0202a5c:	00002697          	auipc	a3,0x2
 ffffffffc0202a60:	57468693          	addi	a3,a3,1396 # ffffffffc0204fd0 <default_pmm_manager+0x318>
 ffffffffc0202a64:	00002617          	auipc	a2,0x2
 ffffffffc0202a68:	ea460613          	addi	a2,a2,-348 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202a6c:	18600593          	li	a1,390
+ffffffffc0202a6c:	18800593          	li	a1,392
 ffffffffc0202a70:	00002517          	auipc	a0,0x2
 ffffffffc0202a74:	39850513          	addi	a0,a0,920 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202a78:	9e3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5399,7 +5400,7 @@ ffffffffc0202a7c:	00002697          	auipc	a3,0x2
 ffffffffc0202a80:	6cc68693          	addi	a3,a3,1740 # ffffffffc0205148 <default_pmm_manager+0x490>
 ffffffffc0202a84:	00002617          	auipc	a2,0x2
 ffffffffc0202a88:	e8460613          	addi	a2,a2,-380 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202a8c:	18300593          	li	a1,387
+ffffffffc0202a8c:	18500593          	li	a1,389
 ffffffffc0202a90:	00002517          	auipc	a0,0x2
 ffffffffc0202a94:	37850513          	addi	a0,a0,888 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202a98:	9c3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5408,7 +5409,7 @@ ffffffffc0202a9c:	00002697          	auipc	a3,0x2
 ffffffffc0202aa0:	51c68693          	addi	a3,a3,1308 # ffffffffc0204fb8 <default_pmm_manager+0x300>
 ffffffffc0202aa4:	00002617          	auipc	a2,0x2
 ffffffffc0202aa8:	e6460613          	addi	a2,a2,-412 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202aac:	18200593          	li	a1,386
+ffffffffc0202aac:	18400593          	li	a1,388
 ffffffffc0202ab0:	00002517          	auipc	a0,0x2
 ffffffffc0202ab4:	35850513          	addi	a0,a0,856 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202ab8:	9a3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5417,7 +5418,7 @@ ffffffffc0202abc:	00002697          	auipc	a3,0x2
 ffffffffc0202ac0:	59c68693          	addi	a3,a3,1436 # ffffffffc0205058 <default_pmm_manager+0x3a0>
 ffffffffc0202ac4:	00002617          	auipc	a2,0x2
 ffffffffc0202ac8:	e4460613          	addi	a2,a2,-444 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202acc:	18100593          	li	a1,385
+ffffffffc0202acc:	18300593          	li	a1,387
 ffffffffc0202ad0:	00002517          	auipc	a0,0x2
 ffffffffc0202ad4:	33850513          	addi	a0,a0,824 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202ad8:	983fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5426,7 +5427,7 @@ ffffffffc0202adc:	00002697          	auipc	a3,0x2
 ffffffffc0202ae0:	65468693          	addi	a3,a3,1620 # ffffffffc0205130 <default_pmm_manager+0x478>
 ffffffffc0202ae4:	00002617          	auipc	a2,0x2
 ffffffffc0202ae8:	e2460613          	addi	a2,a2,-476 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202aec:	18000593          	li	a1,384
+ffffffffc0202aec:	18200593          	li	a1,386
 ffffffffc0202af0:	00002517          	auipc	a0,0x2
 ffffffffc0202af4:	31850513          	addi	a0,a0,792 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202af8:	963fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5435,7 +5436,7 @@ ffffffffc0202afc:	00002697          	auipc	a3,0x2
 ffffffffc0202b00:	61c68693          	addi	a3,a3,1564 # ffffffffc0205118 <default_pmm_manager+0x460>
 ffffffffc0202b04:	00002617          	auipc	a2,0x2
 ffffffffc0202b08:	e0460613          	addi	a2,a2,-508 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202b0c:	17f00593          	li	a1,383
+ffffffffc0202b0c:	18100593          	li	a1,385
 ffffffffc0202b10:	00002517          	auipc	a0,0x2
 ffffffffc0202b14:	2f850513          	addi	a0,a0,760 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202b18:	943fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5444,7 +5445,7 @@ ffffffffc0202b1c:	00002697          	auipc	a3,0x2
 ffffffffc0202b20:	5cc68693          	addi	a3,a3,1484 # ffffffffc02050e8 <default_pmm_manager+0x430>
 ffffffffc0202b24:	00002617          	auipc	a2,0x2
 ffffffffc0202b28:	de460613          	addi	a2,a2,-540 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202b2c:	17e00593          	li	a1,382
+ffffffffc0202b2c:	18000593          	li	a1,384
 ffffffffc0202b30:	00002517          	auipc	a0,0x2
 ffffffffc0202b34:	2d850513          	addi	a0,a0,728 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202b38:	923fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5453,7 +5454,7 @@ ffffffffc0202b3c:	00002697          	auipc	a3,0x2
 ffffffffc0202b40:	59468693          	addi	a3,a3,1428 # ffffffffc02050d0 <default_pmm_manager+0x418>
 ffffffffc0202b44:	00002617          	auipc	a2,0x2
 ffffffffc0202b48:	dc460613          	addi	a2,a2,-572 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202b4c:	17c00593          	li	a1,380
+ffffffffc0202b4c:	17e00593          	li	a1,382
 ffffffffc0202b50:	00002517          	auipc	a0,0x2
 ffffffffc0202b54:	2b850513          	addi	a0,a0,696 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202b58:	903fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5462,7 +5463,7 @@ ffffffffc0202b5c:	00002697          	auipc	a3,0x2
 ffffffffc0202b60:	55468693          	addi	a3,a3,1364 # ffffffffc02050b0 <default_pmm_manager+0x3f8>
 ffffffffc0202b64:	00002617          	auipc	a2,0x2
 ffffffffc0202b68:	da460613          	addi	a2,a2,-604 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202b6c:	17b00593          	li	a1,379
+ffffffffc0202b6c:	17d00593          	li	a1,381
 ffffffffc0202b70:	00002517          	auipc	a0,0x2
 ffffffffc0202b74:	29850513          	addi	a0,a0,664 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202b78:	8e3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5471,7 +5472,7 @@ ffffffffc0202b7c:	00002697          	auipc	a3,0x2
 ffffffffc0202b80:	52468693          	addi	a3,a3,1316 # ffffffffc02050a0 <default_pmm_manager+0x3e8>
 ffffffffc0202b84:	00002617          	auipc	a2,0x2
 ffffffffc0202b88:	d8460613          	addi	a2,a2,-636 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202b8c:	17a00593          	li	a1,378
+ffffffffc0202b8c:	17c00593          	li	a1,380
 ffffffffc0202b90:	00002517          	auipc	a0,0x2
 ffffffffc0202b94:	27850513          	addi	a0,a0,632 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202b98:	8c3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5480,7 +5481,7 @@ ffffffffc0202b9c:	00002697          	auipc	a3,0x2
 ffffffffc0202ba0:	4f468693          	addi	a3,a3,1268 # ffffffffc0205090 <default_pmm_manager+0x3d8>
 ffffffffc0202ba4:	00002617          	auipc	a2,0x2
 ffffffffc0202ba8:	d6460613          	addi	a2,a2,-668 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202bac:	17900593          	li	a1,377
+ffffffffc0202bac:	17b00593          	li	a1,379
 ffffffffc0202bb0:	00002517          	auipc	a0,0x2
 ffffffffc0202bb4:	25850513          	addi	a0,a0,600 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202bb8:	8a3fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5496,7 +5497,7 @@ ffffffffc0202bd4:	00002697          	auipc	a3,0x2
 ffffffffc0202bd8:	5d468693          	addi	a3,a3,1492 # ffffffffc02051a8 <default_pmm_manager+0x4f0>
 ffffffffc0202bdc:	00002617          	auipc	a2,0x2
 ffffffffc0202be0:	d2c60613          	addi	a2,a2,-724 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202be4:	1bf00593          	li	a1,447
+ffffffffc0202be4:	1c100593          	li	a1,449
 ffffffffc0202be8:	00002517          	auipc	a0,0x2
 ffffffffc0202bec:	22050513          	addi	a0,a0,544 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202bf0:	86bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5505,7 +5506,7 @@ ffffffffc0202bf4:	00002697          	auipc	a3,0x2
 ffffffffc0202bf8:	46468693          	addi	a3,a3,1124 # ffffffffc0205058 <default_pmm_manager+0x3a0>
 ffffffffc0202bfc:	00002617          	auipc	a2,0x2
 ffffffffc0202c00:	d0c60613          	addi	a2,a2,-756 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202c04:	17800593          	li	a1,376
+ffffffffc0202c04:	17a00593          	li	a1,378
 ffffffffc0202c08:	00002517          	auipc	a0,0x2
 ffffffffc0202c0c:	20050513          	addi	a0,a0,512 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202c10:	84bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5514,7 +5515,7 @@ ffffffffc0202c14:	00002697          	auipc	a3,0x2
 ffffffffc0202c18:	40468693          	addi	a3,a3,1028 # ffffffffc0205018 <default_pmm_manager+0x360>
 ffffffffc0202c1c:	00002617          	auipc	a2,0x2
 ffffffffc0202c20:	cec60613          	addi	a2,a2,-788 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202c24:	17700593          	li	a1,375
+ffffffffc0202c24:	17900593          	li	a1,377
 ffffffffc0202c28:	00002517          	auipc	a0,0x2
 ffffffffc0202c2c:	1e050513          	addi	a0,a0,480 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202c30:	82bfd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5522,14 +5523,14 @@ ffffffffc0202c30:	82bfd0ef          	jal	ra,ffffffffc020045a <__panic>
 ffffffffc0202c34:	86d6                	mv	a3,s5
 ffffffffc0202c36:	00002617          	auipc	a2,0x2
 ffffffffc0202c3a:	0ba60613          	addi	a2,a2,186 # ffffffffc0204cf0 <default_pmm_manager+0x38>
-ffffffffc0202c3e:	17300593          	li	a1,371
+ffffffffc0202c3e:	17500593          	li	a1,373
 ffffffffc0202c42:	00002517          	auipc	a0,0x2
 ffffffffc0202c46:	1c650513          	addi	a0,a0,454 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202c4a:	811fd0ef          	jal	ra,ffffffffc020045a <__panic>
     ptep = (pte_t *)KADDR(PDE_ADDR(boot_pgdir_va[0]));
 ffffffffc0202c4e:	00002617          	auipc	a2,0x2
 ffffffffc0202c52:	0a260613          	addi	a2,a2,162 # ffffffffc0204cf0 <default_pmm_manager+0x38>
-ffffffffc0202c56:	17200593          	li	a1,370
+ffffffffc0202c56:	17400593          	li	a1,372
 ffffffffc0202c5a:	00002517          	auipc	a0,0x2
 ffffffffc0202c5e:	1ae50513          	addi	a0,a0,430 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202c62:	ff8fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5538,7 +5539,7 @@ ffffffffc0202c66:	00002697          	auipc	a3,0x2
 ffffffffc0202c6a:	36a68693          	addi	a3,a3,874 # ffffffffc0204fd0 <default_pmm_manager+0x318>
 ffffffffc0202c6e:	00002617          	auipc	a2,0x2
 ffffffffc0202c72:	c9a60613          	addi	a2,a2,-870 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202c76:	17000593          	li	a1,368
+ffffffffc0202c76:	17200593          	li	a1,370
 ffffffffc0202c7a:	00002517          	auipc	a0,0x2
 ffffffffc0202c7e:	18e50513          	addi	a0,a0,398 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202c82:	fd8fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5547,7 +5548,7 @@ ffffffffc0202c86:	00002697          	auipc	a3,0x2
 ffffffffc0202c8a:	33268693          	addi	a3,a3,818 # ffffffffc0204fb8 <default_pmm_manager+0x300>
 ffffffffc0202c8e:	00002617          	auipc	a2,0x2
 ffffffffc0202c92:	c7a60613          	addi	a2,a2,-902 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202c96:	16f00593          	li	a1,367
+ffffffffc0202c96:	17100593          	li	a1,369
 ffffffffc0202c9a:	00002517          	auipc	a0,0x2
 ffffffffc0202c9e:	16e50513          	addi	a0,a0,366 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202ca2:	fb8fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5556,7 +5557,7 @@ ffffffffc0202ca6:	00002697          	auipc	a3,0x2
 ffffffffc0202caa:	6c268693          	addi	a3,a3,1730 # ffffffffc0205368 <default_pmm_manager+0x6b0>
 ffffffffc0202cae:	00002617          	auipc	a2,0x2
 ffffffffc0202cb2:	c5a60613          	addi	a2,a2,-934 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202cb6:	1b600593          	li	a1,438
+ffffffffc0202cb6:	1b800593          	li	a1,440
 ffffffffc0202cba:	00002517          	auipc	a0,0x2
 ffffffffc0202cbe:	14e50513          	addi	a0,a0,334 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202cc2:	f98fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5565,7 +5566,7 @@ ffffffffc0202cc6:	00002697          	auipc	a3,0x2
 ffffffffc0202cca:	66a68693          	addi	a3,a3,1642 # ffffffffc0205330 <default_pmm_manager+0x678>
 ffffffffc0202cce:	00002617          	auipc	a2,0x2
 ffffffffc0202cd2:	c3a60613          	addi	a2,a2,-966 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202cd6:	1b300593          	li	a1,435
+ffffffffc0202cd6:	1b500593          	li	a1,437
 ffffffffc0202cda:	00002517          	auipc	a0,0x2
 ffffffffc0202cde:	12e50513          	addi	a0,a0,302 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202ce2:	f78fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5574,7 +5575,7 @@ ffffffffc0202ce6:	00002697          	auipc	a3,0x2
 ffffffffc0202cea:	61a68693          	addi	a3,a3,1562 # ffffffffc0205300 <default_pmm_manager+0x648>
 ffffffffc0202cee:	00002617          	auipc	a2,0x2
 ffffffffc0202cf2:	c1a60613          	addi	a2,a2,-998 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202cf6:	1af00593          	li	a1,431
+ffffffffc0202cf6:	1b100593          	li	a1,433
 ffffffffc0202cfa:	00002517          	auipc	a0,0x2
 ffffffffc0202cfe:	10e50513          	addi	a0,a0,270 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202d02:	f58fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5583,7 +5584,7 @@ ffffffffc0202d06:	00002697          	auipc	a3,0x2
 ffffffffc0202d0a:	5b268693          	addi	a3,a3,1458 # ffffffffc02052b8 <default_pmm_manager+0x600>
 ffffffffc0202d0e:	00002617          	auipc	a2,0x2
 ffffffffc0202d12:	bfa60613          	addi	a2,a2,-1030 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202d16:	1ae00593          	li	a1,430
+ffffffffc0202d16:	1b000593          	li	a1,432
 ffffffffc0202d1a:	00002517          	auipc	a0,0x2
 ffffffffc0202d1e:	0ee50513          	addi	a0,a0,238 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202d22:	f38fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5606,7 +5607,7 @@ ffffffffc0202d56:	00002697          	auipc	a3,0x2
 ffffffffc0202d5a:	23268693          	addi	a3,a3,562 # ffffffffc0204f88 <default_pmm_manager+0x2d0>
 ffffffffc0202d5e:	00002617          	auipc	a2,0x2
 ffffffffc0202d62:	baa60613          	addi	a2,a2,-1110 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202d66:	16e00593          	li	a1,366
+ffffffffc0202d66:	17000593          	li	a1,368
 ffffffffc0202d6a:	00002517          	auipc	a0,0x2
 ffffffffc0202d6e:	09e50513          	addi	a0,a0,158 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202d72:	ee8fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -5615,7 +5616,7 @@ ffffffffc0202d76:	00002697          	auipc	a3,0x2
 ffffffffc0202d7a:	1e268693          	addi	a3,a3,482 # ffffffffc0204f58 <default_pmm_manager+0x2a0>
 ffffffffc0202d7e:	00002617          	auipc	a2,0x2
 ffffffffc0202d82:	b8a60613          	addi	a2,a2,-1142 # ffffffffc0204908 <commands+0x818>
-ffffffffc0202d86:	16b00593          	li	a1,363
+ffffffffc0202d86:	16d00593          	li	a1,365
 ffffffffc0202d8a:	00002517          	auipc	a0,0x2
 ffffffffc0202d8e:	07e50513          	addi	a0,a0,126 # ffffffffc0204e08 <default_pmm_manager+0x150>
 ffffffffc0202d92:	ec8fd0ef          	jal	ra,ffffffffc020045a <__panic>
@@ -6241,7 +6242,7 @@ ffffffffc020326a <forkret>:
 static void
 forkret(void)
 {
-    forkrets(current->tf);
+    forkrets(current->tf); //把中断帧传进去（a0寄存器即tf）
 ffffffffc020326a:	0000a797          	auipc	a5,0xa
 ffffffffc020326e:	2667b783          	ld	a5,614(a5) # ffffffffc020d4d0 <current>
 ffffffffc0203272:	73c8                	ld	a0,160(a5)
@@ -6398,7 +6399,7 @@ ffffffffc020337a:	4509                	li	a0,2
 ffffffffc020337c:	915fe0ef          	jal	ra,ffffffffc0201c90 <alloc_pages>
     if (page != NULL)
 ffffffffc0203380:	1a050d63          	beqz	a0,ffffffffc020353a <do_fork+0x1ea>
-    return page - pages + nbase;
+    return page - pages + nbase;//计算页号
 ffffffffc0203384:	0000a697          	auipc	a3,0xa
 ffffffffc0203388:	1346b683          	ld	a3,308(a3) # ffffffffc020d4b8 <pages>
 ffffffffc020338c:	40d506b3          	sub	a3,a0,a3
@@ -6406,14 +6407,14 @@ ffffffffc0203390:	8699                	srai	a3,a3,0x6
 ffffffffc0203392:	00002517          	auipc	a0,0x2
 ffffffffc0203396:	63e53503          	ld	a0,1598(a0) # ffffffffc02059d0 <nbase>
 ffffffffc020339a:	96aa                	add	a3,a3,a0
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc020339c:	00c69793          	slli	a5,a3,0xc
 ffffffffc02033a0:	83b1                	srli	a5,a5,0xc
 ffffffffc02033a2:	0000a717          	auipc	a4,0xa
 ffffffffc02033a6:	10e73703          	ld	a4,270(a4) # ffffffffc020d4b0 <npage>
-    return page2ppn(page) << PGSHIFT;
+    return page2ppn(page) << PGSHIFT; //页号->物理地址
 ffffffffc02033aa:	06b2                	slli	a3,a3,0xc
-    return KADDR(page2pa(page));
+    return KADDR(page2pa(page)); //KADDR是物理地址->内核虚拟地址
 ffffffffc02033ac:	1ce7f363          	bgeu	a5,a4,ffffffffc0203572 <do_fork+0x222>
     assert(current->mm == NULL);
 ffffffffc02033b0:	0000a317          	auipc	t1,0xa
@@ -6458,12 +6459,12 @@ ffffffffc020340e:	c1e80813          	addi	a6,a6,-994 # ffffffffc0209028 <last_pi
 ffffffffc0203412:	00082783          	lw	a5,0(a6)
     proc->tf->gpr.sp = (esp == 0) ? (uintptr_t)proc->tf : esp;
 ffffffffc0203416:	0126b823          	sd	s2,16(a3)
-    proc->context.ra = (uintptr_t)forkret;
+    proc->context.ra = (uintptr_t)forkret; //switch_to 最后ret的地址就是ra寄存器，来源就是这个
 ffffffffc020341a:	00000717          	auipc	a4,0x0
 ffffffffc020341e:	e5070713          	addi	a4,a4,-432 # ffffffffc020326a <forkret>
     if (++last_pid >= MAX_PID)
 ffffffffc0203422:	0017851b          	addiw	a0,a5,1
-    proc->context.ra = (uintptr_t)forkret;
+    proc->context.ra = (uintptr_t)forkret; //switch_to 最后ret的地址就是ra寄存器，来源就是这个
 ffffffffc0203426:	02e9b823          	sd	a4,48(s3)
     proc->context.sp = (uintptr_t)(proc->tf);
 ffffffffc020342a:	02d9bc23          	sd	a3,56(s3)
@@ -6645,9 +6646,9 @@ ffffffffc020359e:	850a                	mv	a0,sp
 ffffffffc02035a0:	fe06                	sd	ra,312(sp)
     memset(&tf, 0, sizeof(struct trapframe));
 ffffffffc02035a2:	095000ef          	jal	ra,ffffffffc0203e36 <memset>
-    tf.gpr.s0 = (uintptr_t)fn;
+    tf.gpr.s0 = (uintptr_t)fn;  //s0存函数指针
 ffffffffc02035a6:	e0ca                	sd	s2,64(sp)
-    tf.gpr.s1 = (uintptr_t)arg;
+    tf.gpr.s1 = (uintptr_t)arg;  //s1存函数参数
 ffffffffc02035a8:	e4a6                	sd	s1,72(sp)
     tf.status = (read_csr(sstatus) | SSTATUS_SPP | SSTATUS_SPIE) & ~SSTATUS_SIE;
 ffffffffc02035aa:	100027f3          	csrr	a5,sstatus
@@ -6657,12 +6658,12 @@ ffffffffc02035b6:	e23e                	sd	a5,256(sp)
     return do_fork(clone_flags | CLONE_VM, 0, &tf);
 ffffffffc02035b8:	860a                	mv	a2,sp
 ffffffffc02035ba:	10046513          	ori	a0,s0,256
-    tf.epc = (uintptr_t)kernel_thread_entry;
+    tf.epc = (uintptr_t)kernel_thread_entry;  //epc指向kernel_thread_entry
 ffffffffc02035be:	00000797          	auipc	a5,0x0
 ffffffffc02035c2:	c4278793          	addi	a5,a5,-958 # ffffffffc0203200 <kernel_thread_entry>
     return do_fork(clone_flags | CLONE_VM, 0, &tf);
 ffffffffc02035c6:	4581                	li	a1,0
-    tf.epc = (uintptr_t)kernel_thread_entry;
+    tf.epc = (uintptr_t)kernel_thread_entry;  //epc指向kernel_thread_entry
 ffffffffc02035c8:	e63e                	sd	a5,264(sp)
     return do_fork(clone_flags | CLONE_VM, 0, &tf);
 ffffffffc02035ca:	d87ff0ef          	jal	ra,ffffffffc0203350 <do_fork>

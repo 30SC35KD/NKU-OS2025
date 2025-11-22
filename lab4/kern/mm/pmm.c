@@ -220,9 +220,9 @@ void pmm_init(void)
 //  la:     the linear address need to map
 //  create: a logical value to decide if alloc a page for PT
 // return vaule: the kernel virtual address of this pte
-pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
+pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create) //在这个地方pgdir是虚拟地址
 {
-    pde_t *pdep1 = &pgdir[PDX1(la)];
+    pde_t *pdep1 = &pgdir[PDX1(la)]; //pgdir是基地址（一级页表）
     if (!(*pdep1 & PTE_V))
     {
         struct Page *page;
@@ -231,11 +231,12 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
             return NULL;
         }
         set_page_ref(page, 1);
-        uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
+        uintptr_t pa = page2pa(page); //获取物理地址
+        memset(KADDR(pa), 0, PGSIZE); //清零页面
         *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
     }
-    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
+    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)]; //PDE_ADDR作用是提取页表项的物理页号，左移得到物理地址
+    //然后转为虚拟地址并转换成页表项数组，这样就可以利用第二级偏移
     if (!(*pdep0 & PTE_V))
     {
         struct Page *page;
@@ -248,7 +249,7 @@ pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
         memset(KADDR(pa), 0, PGSIZE);
         *pdep0 = pte_create(page2ppn(page), PTE_U | PTE_V);
     }
-    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];//第三级偏移，得到了指向页的页表项指针
 }
 
 // get_page - get related Page struct for linear address la using PDT pgdir
@@ -307,25 +308,26 @@ void page_remove(pde_t *pgdir, uintptr_t la)
 // note: PT is changed, so the TLB need to be invalidate
 int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm)
 {
-    pte_t *ptep = get_pte(pgdir, la, 1);
+    pte_t *ptep = get_pte(pgdir, la, 1); //页表项64位，高44位是物理页号PPN，低20位是标志位
+    //得到了指向物理页的页表项
     if (ptep == NULL)
     {
         return -E_NO_MEM;
     }
-    page_ref_inc(page);
+    page_ref_inc(page);//防止后续操作中，如果 page 正好是被替换的旧页面，引用计数归零导致被错误释放
     if (*ptep & PTE_V)
     {
-        struct Page *p = pte2page(*ptep);
-        if (p == page)
+        struct Page *p = pte2page(*ptep); //获取旧映射的物理页面
+        if (p == page) //正好映射的是同一页面
         {
-            page_ref_dec(page);
+            page_ref_dec(page); 
         }
-        else
+        else //映射的不是同一页面
         {
-            page_remove_pte(pgdir, la, ptep);
+            page_remove_pte(pgdir, la, ptep); //删除旧映射，释放旧页面
         }
     }
-    *ptep = pte_create(page2ppn(page), PTE_V | perm);
+    *ptep = pte_create(page2ppn(page), PTE_V | perm); //这个页表项的地址没变，内容更新了，也就建立了新的映射
     tlb_invalidate(pgdir, la);
     return 0;
 }
