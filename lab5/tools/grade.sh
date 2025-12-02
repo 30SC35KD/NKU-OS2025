@@ -185,7 +185,9 @@ build_run() {
 
     show_time
 
-    cp $qemu_out .`echo $tag | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g'`.log
+    qemu_out_dir=$(dirname "$qemu_out")
+    mkdir -p "$qemu_out_dir/log"
+    cp "$qemu_out" "$qemu_out_dir/log/$(echo "$tag" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g').log"
 }
 
 check_result() {
