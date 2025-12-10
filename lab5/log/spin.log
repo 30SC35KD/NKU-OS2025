@@ -31,9 +31,9 @@ DTB init completed
 
 Special kernel symbols:
   entry  0xc020004a (virtual)
-  etext  0xc0205664 (virtual)
+  etext  0xc0205806 (virtual)
   edata  0xc02a6268 (virtual)
-  end    0xc02aa714 (virtual)
+  end    0xc02aa70c (virtual)
 Kernel executable memory footprint: 682KB
 memory management: default_pmm_manager
 physcial memory map:
@@ -52,3 +52,12 @@ Breakpoint
 I am the parent. Forking the child...
 I am the parent. Running the child...
 I am the child. spinning ...
+I am the parent.  Killing the child...
+kill returns 0
+wait returns 0
+spin may pass.
+all user-mode processes have quit.
+init check memory pass.
+kernel panic at kern/process/proc.c:515:
+    initproc exit.
+

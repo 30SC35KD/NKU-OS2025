@@ -396,36 +396,43 @@ int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end,
             {
                 return -E_NO_MEM;
             }
+            
             uint32_t perm = (*ptep & PTE_USER);
-            // get page from ptep
-            struct Page *page = pte2page(*ptep);
-            // alloc a page for process B
-            struct Page *npage = alloc_page();
-            assert(page != NULL);
-            assert(npage != NULL);
-            int ret = 0;
-            /* LAB5:EXERCISE2 YOUR CODE
-             * replicate content of page to npage, build the map of phy addr of
-             * nage with the linear addr start
-             *
-             * Some Useful MACROs and DEFINEs, you can use them in below
-             * implementation.
-             * MACROs or Functions:
-             *    page2kva(struct Page *page): return the kernel vritual addr of
-             * memory which page managed (SEE pmm.h)
-             *    page_insert: build the map of phy addr of an Page with the
-             * linear addr la
-             *    memcpy: typical memory copy function
-             *
-             * (1) find src_kvaddr: the kernel virtual address of page
-             * (2) find dst_kvaddr: the kernel virtual address of npage
-             * (3) memory copy from src_kvaddr to dst_kvaddr, size is PGSIZE
-             * (4) build the map of phy addr of  nage with the linear addr start
-             */
-            void *src_kvaddr = page2kva(page); // Get the kernel virtual address of the source page.
-            void *dst_kvaddr = page2kva(npage); // Get the kernel virtual address of the destination page.
-            memcpy(dst_kvaddr, src_kvaddr, PGSIZE); // Copy the content of the source page to the destination page.
-            ret = page_insert(to, npage, start, perm); // Insert the destination page into the page table of the target process.
+            
+            if (share) {
+                // 实现COW机制：增加页面引用计数，并设置为只读
+                struct Page *page = pte2page(*ptep);
+                assert(page != NULL);
+                
+                page_ref_inc(page);  // 增加引用计数
+                perm &= ~PTE_W;  // 移除写权限，设置为只读
+                
+                // 直接映射相同的物理页面到子进程，设置为只读
+                int ret = page_insert(to, page, start, perm);
+                if (ret != 0) {
+                    page_ref_dec(page);  // 映射失败时减少引用计数
+                    return ret;
+                }
+                
+                // 同时更新父进程的页面为只读，这样两个进程都需要在写入时复制
+                *ptep &= ~PTE_W;  // 移除父进程的写权限
+                tlb_invalidate(from, start);  // 刷新父进程的TLB缓存
+            } else {
+                // 传统方式：分配新页面并复制内容
+                struct Page *npage = alloc_page();
+                if (npage == NULL) {
+                    return -E_NO_MEM;
+                }
+                struct Page *page = pte2page(*ptep);
+                assert(page != NULL);
+                
+                void *src_kvaddr = page2kva(page); // 获取源页面的内核虚拟地址
+                void *dst_kvaddr = page2kva(npage); // 获取目标页面的内核虚拟地址
+                memcpy(dst_kvaddr, src_kvaddr, PGSIZE); // 复制页面内容
+                
+                int ret = page_insert(to, npage, start, perm); // 将目标页面插入到目标进程的页表中
+    
+            }
         }
         start += PGSIZE;
     } while (start != 0 && start < end);
