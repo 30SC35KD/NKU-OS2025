@@ -1,0 +1,9 @@
+git add .
+git commit -m''
+git remote add origin https://github.com/30SC35KD/NKU-OS2025
+git push -u origin master
+git fetch origin 
+git pull origin ...
+
+
+win+space切换输入法
