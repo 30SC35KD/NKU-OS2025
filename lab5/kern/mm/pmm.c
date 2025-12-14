@@ -397,22 +397,20 @@ int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end,
                 return -E_NO_MEM;
             }
 
-            // 修复1：保留核心权限（R/X/U），而非仅PTE_USER
             uint32_t perm = (*ptep & PTE_USER);
 
             if (share) {
                 // COW逻辑：共享物理页，设为只读
                 struct Page *page = pte2page(*ptep);
                 assert(page != NULL);
-
-                perm &= ~PTE_W;  // 移除写权限（保留R/X/U）
-                page_insert(from, page, start, perm);
-                // 映射到子进程（只读）
-                int ret = page_insert(to, page, start, perm);
-            
-                // 父进程页表设为只读，刷新TLB
-                *ptep = (*ptep & ~PTE_W) | (perm & PTE_USER); // 保留核心权限
-                tlb_invalidate(from, start);
+                int ret = page_insert(to, page, start, perm & (~PTE_W));
+                if (ret != 0) {
+                    return ret;
+                }
+                ret = page_insert(from, page, start, perm & (~PTE_W));
+                if (ret != 0) {
+                    return ret;
+                }
             } else {
                 // 传统拷贝：分配新页+复制内容
                 struct Page *npage = alloc_page();

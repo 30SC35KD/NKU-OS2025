@@ -104,4 +104,78 @@ do_execve里面把新的程序加载到当前进程里的工作都在load_icode(
 
 关于COW机制，我们在Challenge部分进行讨论。
 ## Challenge:
-copy_mm->lock_mm->dup_mmap->copy_range(share=1)
+### 1. 实现COW机制
+我们发现，copy_range留了一个形参shre没有使用，这个就是COW机制的开关，copy_range在fork调用时被用到，调用的路径是：
+do_fork->copy_mm->lock_mm->dup_mmap->copy_range(share=1)
+我们在这里就不做拷贝了，而是把物理页面分别映射到子进程空间和父进程空间，其实就是调用了两次page_insert。需要注意的是，写权限要置零，也就是说当前父子进程对页面只有读权限，这为我们后续捕获缺页异常提供了条件。代码如下：
+```c
+        if (share) {
+                // COW逻辑：共享物理页，设为只读
+                struct Page *page = pte2page(*ptep);
+                assert(page != NULL);
+                int ret = page_insert(to, page, start, perm & (~PTE_W));
+                if (ret != 0) {
+                    return ret;
+                }
+                ret = page_insert(from, page, start, perm & (~PTE_W));
+                if (ret != 0) {
+                    return ret;
+                }
+            }
+```
+一旦有进程写该物理页，那么就会触发**CAUSE_STORE_PAGE_FAULT**，所以我们要在异常处理函数中处理写缺页异常。设计思路如下：
+1. 校验页表项，比如验证页表项为只读属性
+1. 校验地址合法性，验证触发写错误的地址（tf->tval）在合法的虚拟内存空间内。首先验证VMA存在，并确定这块空间可写
+1. 获取物理页面和页表项
+1. 如果该页的引用计数仅为1，那么说明这个页被独占，那么重新建立当前进程与物理页的映射，并把权限设为可写。
+1. 如果引用计数大于1，那么该页面被共享。我们的做法是alloc出一个新页，把旧页拷贝到新页。但建立当前进程与新页的映射，并设置权限可写。
+代码如下：
+```c
+    case CAUSE_STORE_PAGE_FAULT:
+        if (1) {
+            uintptr_t addr = tf->tval;  // 获取触发异常的地址
+            struct mm_struct *mm = current->mm;
+            pte_t *ptep;
+            
+            // 检查是否是COW场景
+            ptep = get_pte(mm->pgdir, addr, 0);
+            if (ptep && (*ptep & PTE_V) && !(*ptep & PTE_W)) {
+                struct vma_struct *vma = find_vma(mm, addr);
+                if (vma && (vma->vm_flags & VM_WRITE)) {
+                    struct Page *page = pte2page(*ptep);
+                    uint32_t perm = (*ptep & PTE_USER);
+                    
+                    // 如果引用计数为1，直接设为可写
+                    if (page_ref(page) == 1) {
+                        page_insert(mm->pgdir, page, addr, perm | PTE_W);
+                    } else {
+                        // 引用计数>1，需要复制页面
+                        struct Page *npage = alloc_page();
+                        if (npage == NULL) {
+                            panic("COW: out of memory");
+                        }
+                        memcpy(page2kva(npage), page2kva(page), PGSIZE);
+                        if (page_insert(mm->pgdir, npage, addr, perm | PTE_W) != 0) {
+                            panic("COW: page_insert failed");
+                        }
+                    }
+                    break;
+                }
+            }
+            // 非COW场景，打印错误信息
+            cprintf("Store fault at %p (epc: %p)\n", tf->tval, tf->epc);
+            print_trapframe(tf);
+            panic("handle pgfault failed");
+        }
+        break;
+```
+测试时，我们只需把share变量设为1，就可以启用COW机制。在框架提供的用户程序中，有几个程序比如forktest、spin、exit、badarg等会使用fork，那么就用到了刚实现的COW机制。这其中难免会有对栈的写操作等等，所以会触发缺页异常，这样就测试了共享机制+缺页异常处理的COW实现。
+我们可以简单描述一下COW机制的状态机：
+1. 独占可写（ref=1，PTE_W=1）经过fork后变成共享只读（ref>1，PTE_W=0）
+1. 共享只读（ref>1，PTE_W=0）遇到写缺页的情况，原页仍为共享只读（ref>1，PTE_W=0），新页独占可写（ref=1，PTE_W=1）
+1. 共享只读（ref>1，PTE_W=0）遇到page_remove，仍为共享只读，直到ref = 0，变成无映射状态
+1. 独占可写（ref=1，PTE_W=1）遇到page_remove，直接变成无映射状态
+### 2.说明该用户程序是何时被预先加载到内存中的？与我们常用操作系统的加载有何区别，原因是什么？
+加载的过程在load_icode函数中完成，其中解析了用户程序ELF格式的二进制image，并且便利了TEXT、DATA、BSS段，并对每个段进行了虚拟地址映射，分配物理页并直接用memcpy拷贝到物理页上。然后提前分配 4 个物理页作为用户栈，而非等待栈访问时再分配。
+而常用的操作系统如Linux、Windows等，进程启动时仅创建虚拟地址映射，不分配物理页；仅当进程访问某虚拟页触发缺页异常时，才分配物理页并加载数据，也就是按需分配。
+造成这样的原因是ucore希望简化设计，突出关键的理念即可。更重要的是，ucore仅运行少量用户进程，物理内存充足，无需通过按需分页节省内存；而常用 OS 需支持多进程并发，必须通过按需分页避免物理内存被闲置页占满；而且ucore未实现页缓存和文件映射，无法支撑按需分页的 “缺页->读文件” 逻辑，因此只能提前拷贝所有数据.

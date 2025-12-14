@@ -219,44 +219,43 @@ void exception_handler(struct trapframe *tf)
     case CAUSE_LOAD_PAGE_FAULT:
         cprintf("Load page fault\n");
         break;
-        case CAUSE_STORE_PAGE_FAULT: {
-            // 只处理用户进程的页错误
-            if (current != NULL && current->mm != NULL) {
-                uintptr_t addr = tf->tval;
-                uintptr_t aligned_addr = ROUNDDOWN(addr, PGSIZE); // 页对齐是必须的
-                pte_t *ptep = NULL;
-                struct Page *old_page = get_page(current->mm->pgdir, aligned_addr, &ptep);
-        
-                // 核心校验：有效页 + 只读 + 引用计数>1（COW核心条件）
-                if (old_page != NULL && ptep != NULL && (*ptep & PTE_V) && 
-                    !(*ptep & PTE_W) && page_ref(old_page) > 1) {
-        
-                    // 1. 分配新页（COW核心：写时复制）
-                    struct Page *new_page = alloc_page();
-                    if (new_page == NULL) break; // 分配失败，走默认错误
-        
-                    // 2. 复制旧页内容到新页（极简版：只拷贝核心数据）
-                    memcpy(page2kva(new_page), page2kva(old_page), PGSIZE);
-        
-                    // 3. 新页权限：只读→可写（保留基础用户权限）
-                    uint32_t new_perm = (*ptep & (PTE_R | PTE_X | PTE_U)) | PTE_W;
-        
-                    // 4. 关键：先删旧映射（避免TLB残留）
-                    page_remove(current->mm->pgdir, aligned_addr);
-                    // 5. 插入新页（替换旧页）
-                    if (page_insert(current->mm->pgdir, new_page, aligned_addr, new_perm) == 0) {
-                        
-                        tlb_invalidate(current->mm->pgdir, aligned_addr); // 刷新TLB
-                        return; // 重试写指令（核心：直接返回，epc会重新执行错误指令）
+        case CAUSE_STORE_PAGE_FAULT:
+        if (1) {
+            uintptr_t addr = tf->tval;  // 获取触发异常的地址
+            struct mm_struct *mm = current->mm;
+            pte_t *ptep;
+            
+            // 检查是否是COW场景
+            ptep = get_pte(mm->pgdir, addr, 0);
+            if (ptep && (*ptep & PTE_V) && !(*ptep & PTE_W)) {
+                struct vma_struct *vma = find_vma(mm, addr);
+                if (vma && (vma->vm_flags & VM_WRITE)) {
+                    struct Page *page = pte2page(*ptep);
+                    uint32_t perm = (*ptep & PTE_USER);
+                    
+                    // 如果引用计数为1，直接设为可写
+                    if (page_ref(page) == 1) {
+                        page_insert(mm->pgdir, page, addr, perm | PTE_W);
                     } else {
-                        free_page(new_page); // 映射失败，释放新页（防泄漏）
+                        // 引用计数>1，需要复制页面
+                        struct Page *npage = alloc_page();
+                        if (npage == NULL) {
+                            panic("COW: out of memory");
+                        }
+                        memcpy(page2kva(npage), page2kva(page), PGSIZE);
+                        if (page_insert(mm->pgdir, npage, addr, perm | PTE_W) != 0) {
+                            panic("COW: page_insert failed");
+                        }
                     }
+                    break;
                 }
             }
-            // 非COW错误：打印基础信息
+            // 非COW场景，打印错误信息
             cprintf("Store fault at %p (epc: %p)\n", tf->tval, tf->epc);
-            break;
+            print_trapframe(tf);
+            panic("handle pgfault failed");
         }
+        break;
     default:
         print_trapframe(tf);
         break;
