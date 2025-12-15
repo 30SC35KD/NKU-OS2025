@@ -102,7 +102,7 @@ do_execve里面把新的程序加载到当前进程里的工作都在load_icode(
         int ret = page_insert(to, npage, start, perm); // 将目标页面插入到目标进程的页表中
 ```
 
-关于COW机制，我们在Challenge部分进行讨论。
+关于COW机制，我们在Challenge部分进行实现和讨论。
 
 ## 练习3：阅读分析源代码，理解进程执行 fork/exec/wait/exit 的实现，以及系统调用的实现（不需要编码）
 接下来我们分析fork/exec/wait/exit的执行流程。总的来说，这些函数在用户程序中被调用，因此在用户进程需要为函数的调用准备参数，发起调用请求。具体调用的就是do_*()函数。
